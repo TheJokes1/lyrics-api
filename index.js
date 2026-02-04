@@ -110,7 +110,7 @@ function mapPerformer(row) {
 app.post("/admin/reset-db", (req, res) => {
   try {
     const Database = require("better-sqlite3");
-    
+    console.log("RESET ENDPOINT DB PATH = ", dbPath);
     // IMPORTANT: use the SAME path as your app
     const dbPath = process.env.DB_PATH || 'lyrics.sqlite';
     const db = new Database(dbPath);
