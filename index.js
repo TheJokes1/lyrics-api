@@ -110,11 +110,13 @@ function mapPerformer(row) {
 app.post("/admin/reset-db", (req, res) => {
   try {
     const Database = require("better-sqlite3");
-    const db = new Database("data/app.db");
-
-    db.pragma("foreign_keys = ON");
+    
+    // IMPORTANT: use the SAME path as your app
+    const dbPath = process.env.DB_PATH || 'lyrics.sqlite';
+    const db = new Database(dbPath);
 
     db.exec(`
+      PRAGMA foreign_keys = ON;
       DELETE FROM lyrics;
       DELETE FROM performers;
       DELETE FROM sqlite_sequence WHERE name='lyrics';
