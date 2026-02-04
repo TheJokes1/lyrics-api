@@ -1,5 +1,7 @@
 // index.js
 console.log("🚀 Express start: index.js geladen");
+import { SEED_PERFORMERS } from "./data/seed-performers.js";
+import Database from "better-sqlite3";
 
 export const SEED_PERFORMERS = [
   { performerId: 1, name: "The Smiths" },
@@ -176,6 +178,36 @@ function mapPerformer(row) {
     genre: row.Genre,
   };
 }
+
+
+app.get("/admin/seed-performers", (req, res) => {
+  const dbPath = process.env.DB_PATH || "lyrics.sqlite";
+  const db = new Database(dbPath);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS performers (
+      performerId INTEGER PRIMARY KEY,
+      name TEXT NOT NULL
+    );
+  `);
+
+  const stmt = db.prepare(`
+    INSERT OR REPLACE INTO performers (performerId, name)
+    VALUES (@performerId, @name)
+  `);
+
+  const tx = db.transaction(() => {
+    SEED_PERFORMERS.forEach(p => stmt.run(p));
+  });
+
+  tx();
+
+  res.json({ ok: true, imported: SEED_PERFORMERS.length });
+});
+
+
+
+
 
 app.post("/admin/reset-db", (req, res) => {
   try {
