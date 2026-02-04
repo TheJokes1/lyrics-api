@@ -107,6 +107,27 @@ function mapPerformer(row) {
   };
 }
 
+app.post("/admin/reset-db", (req, res) => {
+  try {
+    const Database = require("better-sqlite3");
+    const db = new Database("data/app.db");
+
+    db.pragma("foreign_keys = ON");
+
+    db.exec(`
+      DELETE FROM lyrics;
+      DELETE FROM performers;
+      DELETE FROM sqlite_sequence WHERE name='lyrics';
+      DELETE FROM sqlite_sequence WHERE name='performers';
+    `);
+
+    res.json({ ok: true, message: "Database cleared successfully" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
 
 app.get("/__headers", (req, res) => {
   res.json({
