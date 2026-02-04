@@ -1,6 +1,6 @@
 // index.js
 console.log("🚀 Express start: index.js geladen");
-import { SEED_PERFORMERS } from "./data/seed-performers.js";
+//import { SEED_PERFORMERS } from "./data/seed-performers.js";
 import Database from "better-sqlite3";
 
 export const SEED_PERFORMERS = [
