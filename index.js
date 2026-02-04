@@ -28,7 +28,8 @@ app.use(express.json());
 app.use(morgan("dev"));
 
 // --- database init
-const db = new Database("lyrics.sqlite"); // bestand komt mee in je sandbox repo
+const dbPath = process.env.DB_PATH || 'lyrics.sqlite';
+const db = new Database(dbPath);
 db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
 
