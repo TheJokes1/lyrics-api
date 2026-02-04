@@ -179,6 +179,20 @@ function mapPerformer(row) {
 }
 
 
+
+app.get("/debug/dbinfo", (req, res) => {
+  try {
+    const path = db.memory ? ":memory:" : db.name;  // better-sqlite3
+    const count = db.prepare("SELECT COUNT(*) c FROM Performers").get().c;
+    res.json({ dbPath: path, performerCount: count, env_DB_PATH: process.env.DB_PATH || null });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+
+
+
 app.get("/admin/seed-performers", (req, res) => {
   const dbPath = process.env.DB_PATH || "lyrics.sqlite";
   const db = new Database(dbPath);
