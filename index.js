@@ -3,7 +3,7 @@ console.log("🚀 Express start: index.js geladen");
 //import { SEED_PERFORMERS } from "./data/seed-performers.js";
 import Database from "better-sqlite3";
 
-export const SEED_PERFORMERS = [
+const SEED_PERFORMERS = [
   { performerId: 1, name: "The Smiths" },
   { performerId: 2, name: "The Doors" },
   { performerId: 3, name: "Sade" },
