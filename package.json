@@ -9,7 +9,12 @@
   "keywords": [],
   "author": "Ives van Hoorne",
   "license": "MIT",
-  "dependencies": { 
+
+  "engines": {
+    "node": "18.x"
+  },
+
+  "dependencies": {
     "pg": "^8.11.3",
     "cors": "^2.8.6",
     "express": "^4.22.1",
