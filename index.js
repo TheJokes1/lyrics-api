@@ -63,16 +63,20 @@ app.get("/_debug/dns", async (req, res) => {
 });
 
 /* =========================
-   Performers (zonder genre)
+   Performers
    ========================= */
 
 // GET all performers
 app.get("/api/performers", async (req, res, next) => {
   try {
     const { rows } = await db.query(
-      `select "PerformerId", "Name"
-       from performers
-       order by lower("Name")`
+      `
+      select
+        "PerformerId" as "performerId",
+        "Name"        as "name"
+      from performers
+      order by lower("Name")
+      `
     );
     res.set("Cache-Control", "no-store");
     res.json(rows);
@@ -81,31 +85,27 @@ app.get("/api/performers", async (req, res, next) => {
   }
 });
 
-// POST create/update performer (upsert op unieke name)
+// POST create/update performer (upsert on unique "Name")
 app.post("/api/performers", async (req, res, next) => {
   try {
     const { name } = req.body || {};
-    if (!name || typeof name !== "string") {
-      return res.status(400).json({ error: "name is required" });
-    }
-    const { rows } = await db.query(
-      `insert into performers (name)
-       values ($1)
-       on conflict (name) do nothing
-       returning performer_id as "performerId", name`,
-      [name.trim()]
-    );
 
-    // Als de naam al bestond, hebben we geen row terug. Haal dan bestaande op.
-    if (!rows.length) {
-      const existing = await db.query(
-        `select performer_id as "performerId", name
-           from performers
-          where lower(name) = lower($1)`,
-        [name.trim()]
-      );
-      if (existing.rows.length) return res.status(200).json(existing.rows[0]);
+    if (!name || typeof name !== "string" || !name.trim()) {
+      return res.status(400).json({ error: "name is required (non-empty string)" });
     }
+    const cleanName = name.trim();
+
+    const { rows } = await db.query(
+      `
+      insert into performers ("Name")
+      values ($1)
+      on conflict ("Name") do update set "Name" = excluded."Name"
+      returning
+        "PerformerId" as "performerId",
+        "Name"        as "name"
+      `,
+      [cleanName]
+    );
 
     res.status(201).json(rows[0]);
   } catch (e) {
@@ -113,19 +113,8 @@ app.post("/api/performers", async (req, res, next) => {
   }
 });
 
-// DELETE performer by id
-app.delete("/api/performers/:id", async (req, res, next) => {
-  try {
-    const id = Number(req.params.id);
-    await db.query(`delete from performers where performer_id = $1`, [id]);
-    res.status(204).end();
-  } catch (e) {
-    next(e);
-  }
-});
-
 /* =========================
-   Lyrics (ongewijzigd schema)
+   Lyrics
    ========================= */
 
 // POST add lyric
@@ -133,56 +122,49 @@ app.post("/api/lyrics", async (req, res, next) => {
   try {
     const {
       performerId,
-      title,
-      body = null,
+      songTitle,
+      words = null,
       language = null,
       spotLink = null,
       classic = null,
     } = req.body || {};
 
-    if (!performerId || !title) {
-      return res
-        .status(400)
-        .json({ error: "performerId and title are required" });
+    if (!performerId || !songTitle || typeof songTitle !== "string" || !songTitle.trim()) {
+      return res.status(400).json({ error: "performerId and songTitle are required" });
+    }
+
+    // Optional normalization: coerce classic to boolean if sent as "true"/"false"
+    let classicValue = classic;
+    if (typeof classicValue === "string") {
+      const lc = classicValue.toLowerCase();
+      if (lc === "true") classicValue = true;
+      else if (lc === "false") classicValue = false;
     }
 
     const { rows } = await db.query(
-      `insert into lyrics (performer_id, title, body, language, spotlink, classic)
-       values ($1, $2, $3, $4, $5, $6)
-       returning lyric_id as "lyricId",
-                 performer_id as "performerId",
-                 title, body, language, spotlink as "spotLink", classic`,
-      [performerId, title, body, language, spotLink, classic]
+      `
+      insert into lyrics
+        ("PerformerId", "SongTitle", "Words", "Language", "SpotLink", "Classic")
+      values
+        ($1, $2, $3, $4, $5, $6)
+      returning
+        "LyricId"     as "lyricId",
+        "PerformerId" as "performerId",
+        "SongTitle"   as "songTitle",
+        "Words"       as "words",
+        "Language"    as "language",
+        "SpotLink"    as "spotLink",
+        "Classic"     as "classic"
+      `,
+      [performerId, songTitle.trim(), words, language, spotLink, classicValue]
     );
 
     res.status(201).json(rows[0]);
   } catch (e) {
+    // 23503 = foreign_key_violation
     if (e.code === "23503") {
-      // FK violation (performer bestaat niet)
-      return res
-        .status(409)
-        .json({ error: "Unknown performerId (FK violation)" });
+      return res.status(409).json({ error: "Unknown performerId (FK violation)" });
     }
-    next(e);
-  }
-});
-
-// GET lyrics by performer
-app.get("/api/performers/:id/lyrics", async (req, res, next) => {
-  try {
-    const id = Number(req.params.id);
-    const { rows } = await db.query(
-      `select lyric_id as "lyricId",
-              performer_id as "performerId",
-              title, body, language, spotlink as "spotLink", classic
-         from lyrics
-        where performer_id = $1
-        order by lower(title)`,
-      [id]
-    );
-    res.set("Cache-Control", "no-store");
-    res.json(rows);
-  } catch (e) {
     next(e);
   }
 });
@@ -190,21 +172,25 @@ app.get("/api/performers/:id/lyrics", async (req, res, next) => {
 // GET lyric by id
 app.get("/api/lyrics/:id", async (req, res, next) => {
   try {
+    // Keep numeric validation if your ids are integers; if they're UUIDs, remove this guard.
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) {
       return res.status(400).json({ error: "Invalid lyric id" });
     }
 
     const { rows } = await db.query(
-      `select lyric_id   as "lyricId",
-              performer_id as "performerId",
-              title,
-              body,
-              language,
-              spotlink    as "spotLink",
-              classic
-         from lyrics
-        where lyric_id = $1`,
+      `
+      select
+        "LyricId"     as "lyricId",
+        "PerformerId" as "performerId",
+        "SongTitle"   as "songTitle",
+        "Words"       as "words",
+        "Language"    as "language",
+        "SpotLink"    as "spotLink",
+        "Classic"     as "classic"
+      from lyrics
+      where "LyricId" = $1
+      `,
       [id]
     );
 
@@ -218,7 +204,6 @@ app.get("/api/lyrics/:id", async (req, res, next) => {
     next(e);
   }
 });
-
 
 /* =========================
    Error handler
