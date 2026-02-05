@@ -47,6 +47,24 @@ app.get("/health", async (req, res, next) => {
   }
 });
 
+// index.js (temporary)
+app.get("/_debug/dns", async (req, res) => {
+  try {
+    const d = require("dns").promises;
+    const url = new URL(process.env.DATABASE_URL);
+    const host = url.hostname;
+
+    const [a, aaaa] = await Promise.all([
+      d.resolve4(host).catch(() => []),
+      d.resolve6(host).catch(() => []),
+    ]);
+
+    res.json({ host, A: a, AAAA: aaaa });
+  } catch (e) {
+    res.status(500).json({ error: String(e) });
+  }
+});
+
 /* =========================
    Performers (zonder genre)
    ========================= */
