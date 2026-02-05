@@ -72,7 +72,7 @@ app.get("/api/performers", async (req, res, next) => {
     const { rows } = await db.query(
       `select "PerformerId", "Name"
        from performers
-       order by lower(name)`
+       order by lower("Name")`
     );
     res.set("Cache-Control", "no-store");
     res.json(rows);
