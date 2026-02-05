@@ -1,7 +1,7 @@
 // index.js
 console.log("🚀 Express start: index.js geladen");
 
-onst dns = require("dns");
+const dns = require("dns");
 dns.setDefaultResultOrder("ipv4first");
 
 // ⬇️ Postgres pool (Supabase TLS) uit ./db.js
