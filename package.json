@@ -9,8 +9,8 @@
   "keywords": [],
   "author": "Ives van Hoorne",
   "license": "MIT",
-  "dependencies": {
-    "better-sqlite3": "^9.6.0",
+  "dependencies": { 
+    "pg": "^8.11.3",
     "cors": "^2.8.6",
     "express": "^4.22.1",
     "morgan": "^1.10.1"
