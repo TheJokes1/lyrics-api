@@ -70,7 +70,7 @@ app.get("/_debug/dns", async (req, res) => {
 app.get("/api/performers", async (req, res, next) => {
   try {
     const { rows } = await db.query(
-      `select "PerformerId", name
+      `select "PerformerId", "Name"
        from performers
        order by lower(name)`
     );
