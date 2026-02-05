@@ -70,9 +70,9 @@ app.get("/_debug/dns", async (req, res) => {
 app.get("/api/performers", async (req, res, next) => {
   try {
     const { rows } = await db.query(
-      `select performer_id as "performerId", name
-         from performers
-        order by lower(name)`
+      `select "performerId", name
+       from performers
+       order by lower(name)`
     );
     res.set("Cache-Control", "no-store");
     res.json(rows);
