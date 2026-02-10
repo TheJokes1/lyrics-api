@@ -190,7 +190,10 @@ const { rows } = await db.query(
         l."Language"    AS "language",
         l."SpotLink"    AS "spotLink",
         l."Classic"     AS "classic",
-        l."Era"         AS "era"
+        l."Year"        AS "era",
+        l."ImageURL"    AS "imageURL",
+        l."PreviewURL"  AS "previewURL",
+        l."Popularity"  AS "popularity"
       FROM lyrics l
       LEFT JOIN performers p ON p."PerformerId" = l."PerformerId"
       WHERE l."LyricId" = $1
@@ -271,13 +274,16 @@ app.get("/api/lyrics", async (req, res, next) => {
       SELECT
         l."LyricId"     AS "lyricId",
         l."PerformerId" AS "performerId",
-        p."Name"        AS "performer",
+        p."Name"        AS "performer",     -- 👈 ADDED performer name!
         l."SongTitle"   AS "songTitle",
         l."Words"       AS "words",
         l."Language"    AS "language",
         l."SpotLink"    AS "spotLink",
         l."Classic"     AS "classic",
-        l."Era"         AS "era"
+        l."Year"        AS "era",
+        l."ImageURL"    AS "imageURL",
+        l."PreviewURL"  AS "previewURL",
+        l."Popularity"  AS "popularity"
       FROM lyrics l
       LEFT JOIN performers p ON p."PerformerId" = l."PerformerId"
       ${whereSql}
