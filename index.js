@@ -205,6 +205,108 @@ app.get("/api/lyrics/:id", async (req, res, next) => {
   }
 });
 
+
+
+app.get("/api/lyrics", async (req, res, next) => {
+  try {
+    // Normalize inputs: treat undefined/empty strings as null
+    const norm = (v) => {
+      if (v === undefined || v === null) return null;
+      const s = String(v).trim();
+      return s.length ? s : null;
+    };
+
+    // Accept both your new names and the older Angular ones
+    let language = norm(req.query.language);
+    let era = norm(req.query.era ?? req.query.releaseDate);
+    let text = norm(req.query.text ?? req.query.SearchQueryTitle);
+
+    // If frontend wrapped with "%20...%20", clean it safely
+    if (text) {
+      try {
+        const dec = decodeURIComponent(text);
+        text = dec.replace(/^%20|%20$/g, "").trim();
+      } catch {
+        // ignore decode errors, keep original trimmed text
+      }
+    }
+
+    // Pagination
+    const page = Math.max(1, parseInt(req.query.page || "1", 10));
+    const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize || "50", 10)));
+    const offset = (page - 1) * pageSize;
+
+    // Dynamic WHERE with parameterized SQL
+    const where = [];
+    const params = [];
+    let idx = 1;
+
+    if (language) {
+      where.push(`l."Language" = $${idx++}`);
+      params.push(language);
+    }
+    if (era) {
+      where.push(`l."Era" = $${idx++}`);
+      params.push(era);
+    }
+    if (text) {
+      where.push(`(
+        l."SongTitle" ILIKE $${idx}
+        OR COALESCE(l."Words",'') ILIKE $${idx}
+        OR COALESCE(p."Name",'') ILIKE $${idx}
+      )`);
+      params.push(`%${text}%`);
+      idx++;
+    }
+
+    const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+
+    // Main query (include performer name for convenience)
+    const sql = `
+      SELECT
+        l."LyricId"     AS "lyricId",
+        l."PerformerId" AS "performerId",
+        p."Name"        AS "performerName",
+        l."SongTitle"   AS "songTitle",
+        l."Words"       AS "words",
+        l."Language"    AS "language",
+        l."SpotLink"    AS "spotLink",
+        l."Classic"     AS "classic",
+        l."Era"         AS "era"
+      FROM lyrics l
+      LEFT JOIN performers p ON p."PerformerId" = l."PerformerId"
+      ${whereSql}
+      ORDER BY l."LyricId" ASC
+      LIMIT $${idx} OFFSET $${idx + 1}
+    `;
+    const mainParams = params.concat([pageSize, offset]);
+
+    // Count query uses only filter params
+    const countSql = `
+      SELECT COUNT(*)::int AS total
+      FROM lyrics l
+      LEFT JOIN performers p ON p."PerformerId" = l."PerformerId"
+      ${whereSql}
+    `;
+
+    const [countResult, rowsResult] = await Promise.all([
+      db.query(countSql, params),
+      db.query(sql, mainParams),
+    ]);
+
+    res.set("Cache-Control", "no-store");
+    return res.json({
+      page,
+      pageSize,
+      total: countResult.rows[0]?.total ?? 0,
+      items: rowsResult.rows ?? [],
+    });
+  } catch (e) {
+    next(e);
+  }
+});
+
+
 /* =========================
    Error handler
    ========================= */
