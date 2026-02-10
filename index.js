@@ -266,7 +266,7 @@ app.get("/api/lyrics", async (req, res, next) => {
       SELECT
         l."LyricId"     AS "lyricId",
         l."PerformerId" AS "performerId",
-        p."Name"        AS "performerName",
+        p."Name"        AS "performer",
         l."SongTitle"   AS "songTitle",
         l."Words"       AS "words",
         l."Language"    AS "language",
