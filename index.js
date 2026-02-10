@@ -295,12 +295,7 @@ app.get("/api/lyrics", async (req, res, next) => {
     ]);
 
     res.set("Cache-Control", "no-store");
-    return res.json({
-      page,
-      pageSize,
-      total: countResult.rows[0]?.total ?? 0,
-      items: rowsResult.rows ?? [],
-    });
+    return res.json(rowsResult.rows ?? []);
   } catch (e) {
     next(e);
   }
