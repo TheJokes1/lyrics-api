@@ -178,21 +178,26 @@ app.get("/api/lyrics/:id", async (req, res, next) => {
       return res.status(400).json({ error: "Invalid lyric id" });
     }
 
-    const { rows } = await db.query(
+    
+const { rows } = await db.query(
       `
-      select
-        "LyricId"     as "lyricId",
-        "PerformerId" as "performerId",
-        "SongTitle"   as "songTitle",
-        "Words"       as "words",
-        "Language"    as "language",
-        "SpotLink"    as "spotLink",
-        "Classic"     as "classic"
-      from lyrics
-      where "LyricId" = $1
+      SELECT
+        l."LyricId"     AS "lyricId",
+        l."PerformerId" AS "performerId",
+        p."Name"        AS "performer",     -- 👈 ADDED performer name!
+        l."SongTitle"   AS "songTitle",
+        l."Words"       AS "words",
+        l."Language"    AS "language",
+        l."SpotLink"    AS "spotLink",
+        l."Classic"     AS "classic",
+        l."Era"         AS "era"
+      FROM lyrics l
+      LEFT JOIN performers p ON p."PerformerId" = l."PerformerId"
+      WHERE l."LyricId" = $1
       `,
       [id]
     );
+
 
     if (rows.length === 0) {
       return res.status(404).json({ error: "Lyric not found" });
