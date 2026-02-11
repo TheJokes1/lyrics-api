@@ -191,8 +191,8 @@ const { rows } = await db.query(
         l."SpotLink"    AS "spotLink",
         l."Classic"     AS "classic",
         l."Year"        AS "era",
-        l."ImageURL"    AS "imageURL",
-        l."PreviewURL"  AS "previewURL",
+        l."ImageUrl"    AS "imageURL",
+        l."PreviewUrl"  AS "previewURL",
         l."Popularity"  AS "popularity"
       FROM lyrics l
       LEFT JOIN performers p ON p."PerformerId" = l."PerformerId"
@@ -281,8 +281,8 @@ app.get("/api/lyrics", async (req, res, next) => {
         l."SpotLink"    AS "spotLink",
         l."Classic"     AS "classic",
         l."Year"        AS "era",
-        l."ImageURL"    AS "imageURL",
-        l."PreviewURL"  AS "previewURL",
+        l."ImageUrl"    AS "imageURL",
+        l."PreviewUrl"  AS "previewURL",
         l."Popularity"  AS "popularity"
       FROM lyrics l
       LEFT JOIN performers p ON p."PerformerId" = l."PerformerId"
