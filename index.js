@@ -214,7 +214,7 @@ const { rows } = await db.query(
 });
 
 
-
+// GET ALL LYRIC
 app.get("/api/lyrics", async (req, res, next) => {
   try {
     // Normalize inputs: treat undefined/empty strings as null
@@ -241,7 +241,7 @@ app.get("/api/lyrics", async (req, res, next) => {
 
     // Pagination
     const page = Math.max(1, parseInt(req.query.page || "1", 10));
-    const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize || "50", 10)));
+    const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize || "350", 10)));
     const offset = (page - 1) * pageSize;
 
     // Dynamic WHERE with parameterized SQL
