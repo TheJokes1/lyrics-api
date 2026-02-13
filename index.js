@@ -85,6 +85,7 @@ app.get("/api/performers", async (req, res, next) => {
   }
 });
 
+// comment voor commit
 // POST create/update performer (upsert on unique "Name")
 app.post("/api/performers", async (req, res, next) => {
   try {
