@@ -68,11 +68,11 @@ app.get("/_debug/dns", async (req, res) => {
 
 // GET performers filtered by search query (contains, normalized)
 // Voorbeeld:
-//   /api/performers?q=red   hot
-//   /api/performers?q=RED HOT
+//   /api/performers?SearchQuery=red   hot
+//   /api/performers?SearchQuery=RED HOT
 app.get("/api/performers", async (req, res, next) => {
   try {
-    const qRaw = (req.query.q ?? "").toString().trim();
+    const qRaw = (req.query.SearchQuery ?? "").toString().trim();
 
     // Geen query = geen resultaten (geen "lijst van alles" meer)
     if (!qRaw) {
