@@ -66,18 +66,41 @@ app.get("/_debug/dns", async (req, res) => {
    Performers
    ========================= */
 
-// GET all performers
+// GET performers filtered by search query (contains, normalized)
+// Voorbeeld:
+//   /api/performers?q=red   hot
+//   /api/performers?q=RED HOT
 app.get("/api/performers", async (req, res, next) => {
   try {
+    const qRaw = (req.query.q ?? "").toString().trim();
+
+    // Geen query = geen resultaten (geen "lijst van alles" meer)
+    if (!qRaw) {
+      res.set("Cache-Control", "no-store");
+      return res.json([]);
+    }
+
+    // query normaliseren in JS (lowercase + multiple spaces → single)
+    const normalizedQuery = qRaw
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim();
+
     const { rows } = await db.query(
       `
       select
         "PerformerId" as "performerId",
         "Name"        as "name"
       from performers
+      where
+        regexp_replace(lower("Name"), '\\s+', ' ', 'g')
+        like '%' || $1 || '%'
       order by lower("Name")
-      `
+      limit 20
+      `,
+      [normalizedQuery]
     );
+
     res.set("Cache-Control", "no-store");
     res.json(rows);
   } catch (e) {
@@ -85,7 +108,6 @@ app.get("/api/performers", async (req, res, next) => {
   }
 });
 
-// comment voor commit
 // POST create/update performer (upsert on unique "Name")
 app.post("/api/performers", async (req, res, next) => {
   try {
