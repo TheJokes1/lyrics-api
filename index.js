@@ -130,6 +130,8 @@ app.post("/api/performers", async (req, res, next) => {
       [cleanName]
     );
 
+    console.log(`✅ Performer upsert OK → id=${rows[0].performerId}, name="${rows[0].name}"`);
+
     res.status(201).json(rows[0]);
   } catch (e) {
     next(e);
@@ -181,7 +183,8 @@ app.post("/api/lyrics", async (req, res, next) => {
       `,
       [performerId, songTitle.trim(), words, language, spotLink, classicValue]
     );
-
+    console.log(`🎵 Lyric insert OK → lyricId=${rows[0].lyricId}, performerId=${rows[0].performerId}, title="${rows[0].songTitle}"`);
+    
     res.status(201).json(rows[0]);
   } catch (e) {
     // 23503 = foreign_key_violation
